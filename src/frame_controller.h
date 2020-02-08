@@ -22,6 +22,7 @@ class FrameController {
     pthread_t loop_tid;
     void loop();
     static void *init_loop(void *vptr_args);
+    void renderFrame();
     void pushFrameToPipe();
 
 };
