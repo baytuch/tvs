@@ -27,6 +27,6 @@ if (MPG123_INCLUDE_DIR AND MPG123_LIBRARIES)
   message(STATUS "Find libmpg123 installed: ${MPG123_LIBRARIES}")
 else()
   set(MPG123_FOUND FALSE)
-  message(STATUS "Can`t find liblame installed")
+  message(STATUS "Can`t find libmpg123 installed")
 endif()
 
