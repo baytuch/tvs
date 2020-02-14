@@ -15,11 +15,15 @@ if (UNIX)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_GNU_SOURCE")
 endif()
 
-find_package(Lame)
+find_package(Mpg123)
+
+if (MPG123_FOUND)
+  include_directories(${MPG123_INCLUDE_DIR})
+endif()
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${LAME_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${MPG123_LIBRARIES})
 
 if (UNIX)
   target_link_libraries(${PROJECT_NAME} -lpthread)

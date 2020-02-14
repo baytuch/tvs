@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <iostream>
 #include "sleep.h"
+#include "player_audio.h"
 #include "frame_controller.h"
 
 
