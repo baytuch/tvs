@@ -5,13 +5,13 @@
 #include <stdint.h>
 #include <pthread.h>
 
-class FrameController {
+class FrameProcessor {
 
   public:
-    FrameController(const uint16_t &width,
+    FrameProcessor(const uint16_t &width,
                     const uint16_t &height,
                     const uint8_t &rate);
-    ~FrameController();
+    ~FrameProcessor();
 
   private:
     const uint16_t m_width;
