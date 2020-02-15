@@ -200,8 +200,8 @@ void PlayerAudio::buffer_pull(int16_t &pcm_r, int16_t &pcm_l) {
 void PlayerAudio::getPCM(int16_t &pcm_r, int16_t &pcm_l, float &fill) {
   buffer_pull(pcm_r, pcm_l);
   float delta = static_cast<float>(m_buffer_push_n > m_buffer_pull_n ?
-                                   m_buffer_push_n - m_buffer_pull_n :
-                                   m_buffer_pull_n - m_buffer_push_n);
+    m_buffer_push_n - m_buffer_pull_n :
+    PlayerAudio::loop_buffer_size - m_buffer_pull_n + m_buffer_push_n - 1);
   fill = delta / static_cast<float>(PlayerAudio::loop_buffer_size) * 100.0;
 }
 bool PlayerAudio::getMeta(AudioMeta &meta) {
