@@ -12,7 +12,8 @@
 #include "frame_processor.h"
 
 
-const uint32_t FrameProcessor::loop_buffer_size = 25;
+const uint32_t FrameProcessor::frame_rate = 24;
+const uint32_t FrameProcessor::loop_buffer_size = 24;
 const char *FrameProcessor::server_host = "127.0.0.1";
 const uint16_t FrameProcessor::server_port = 35001;
 
@@ -24,8 +25,13 @@ FrameProcessor::FrameProcessor(const uint16_t &width,
                                                         m_rate(rate),
                                                         m_buffer_overflow(false),
                                                         m_buffer_pull_lock(false),
+                                                        m_render_buffer_pull_lock(false),
                                                         m_buffer_push_n(0),
                                                         m_buffer_pull_n(0),
+                                                        m_last_ml_sec(0),
+                                                        m_last_ml_nsec(0),
+                                                        m_last_sl_sec(0),
+                                                        m_last_sl_nsec(0),
                                                         m_fill(0.0),
                                                         m_frame_area(0),
                                                         m_loop_buffer(0),
@@ -45,10 +51,27 @@ FrameProcessor::~FrameProcessor() {
 }
 
 void FrameProcessor::loop() {
-  while(true) {
+  const uint32_t loop_interval_default = static_cast<uint32_t>(1000 / FrameProcessor::frame_rate);
+  uint32_t frame_rate_n = 0;
+  int64_t delta = 0;
+  uint32_t loop_interval = loop_interval_default;
+  while (true) {
     renderFrame();
     buffer_push(m_frame_area);
-    Sleep(33);
+    frame_rate_n++;
+    if (frame_rate_n >= FrameProcessor::frame_rate) {
+      deltaTime(m_last_ml_sec, m_last_ml_nsec, delta);
+      if (delta < 1000000000) {
+        if (loop_interval < loop_interval_default) loop_interval++;
+      }
+      if (delta > 1000000000) {
+        if (loop_interval > 0) loop_interval--;
+      }
+      frame_rate_n = 0;
+      //std::cout << "loop_interval: " << loop_interval << std::endl;
+      //std::cout << "delta: " << (float) delta / 1000000000 << std::endl << std::endl;
+    }
+    if (loop_interval > 0) Sleep(loop_interval);
   }
 }
 
@@ -63,9 +86,12 @@ void *FrameProcessor::init_server(void *vptr_args) {
 }
 
 void FrameProcessor::renderFrame() {
+  m_render_buffer_pull_lock = true;
+  m_render_buffer.pull.title = m_render_buffer.push.title;
+  m_render_buffer.pull.duration = m_render_buffer.push.duration;
   drawClear(m_width, m_height, m_frame_area);
-  //drawGrid(m_width, m_height, m_frame_area);
-  drawText(m_width, m_height, 10, 10, m_frame_area, "hello world!");
+  drawText(m_width, m_height, 10, 10, m_frame_area, m_render_buffer.pull.title.c_str());
+  m_render_buffer_pull_lock = false;
 }
 
 void FrameProcessor::buffer_push(const uint8_t *data) {
@@ -103,6 +129,10 @@ void FrameProcessor::buffer_pull(uint8_t *data) {
 }
 
 void FrameProcessor::server() {
+  const uint32_t loop_interval_default = static_cast<uint32_t>(1000 / FrameProcessor::frame_rate);
+  uint32_t frame_rate_n = 0;
+  int64_t delta = 0;
+  uint32_t loop_interval = loop_interval_default;
   int socketd = 0;
   int acceptd = 0;
   sockaddr_in serv_addr;
@@ -137,11 +167,25 @@ void FrameProcessor::server() {
           end_stream_t = true;
           break;
         }
-      }   
-      //if (m_fill < 50) Sleep(29);
-      //else Sleep(31);
-      Sleep(33);
-      //std::cout << m_fill << std::endl; 
+      }
+      frame_rate_n++;
+      if (frame_rate_n >= FrameProcessor::frame_rate) {
+        deltaTime(m_last_sl_sec, m_last_sl_nsec, delta);
+        float fill_k = 0.0;
+        if (m_fill < 40) fill_k = 1.02;
+        if (m_fill > 60) fill_k = 0.98;
+        if (delta < static_cast<int64_t>(1000000000 * fill_k)) {
+          if (loop_interval < loop_interval_default) loop_interval++;
+        }
+        if (delta > static_cast<int64_t>(1000000000 * fill_k)) {
+          if (loop_interval > 0) loop_interval--;
+        }
+        frame_rate_n = 0;
+        std::cout << "buffer fill: " << m_fill << std::endl;
+        std::cout << "loop_interval: " << loop_interval << std::endl;
+        std::cout << "delta: " << (float) delta / 1000000000 << std::endl << std::endl;
+      }
+      if (loop_interval > 0) Sleep(loop_interval);
       if (end_stream_t) {
         std::cout << "FrameProcessor: server end stream" << std::endl;
         close(acceptd);
@@ -149,5 +193,15 @@ void FrameProcessor::server() {
       }
     }
   }
+}
+
+void FrameProcessor::setTitle(const std::string &title) {
+  waiter(m_render_buffer_pull_lock);
+  m_render_buffer.push.title = title;
+}
+
+void FrameProcessor::setDuration(const int32_t &duration) {
+  waiter(m_render_buffer_pull_lock);
+  m_render_buffer.push.duration = duration;
 }
 
