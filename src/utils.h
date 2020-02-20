@@ -14,5 +14,6 @@ void mem_free_audio(int16_t *area);
 void waiter(bool &flag);
 void get_time(uint64_t &realtime);
 bool timeToString(const int32_t &time_num, std::string &time_str);
+bool deltaTime(int64_t &last_sec, int64_t &last_nsec, int64_t &delta);
 
 #endif // UTILS_H_INCLUDED

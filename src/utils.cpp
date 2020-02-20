@@ -91,3 +91,22 @@ bool timeToString(const int32_t &time_num, std::string &time_str) {
   return res;
 }
 
+bool deltaTime(int64_t &last_sec, int64_t &last_nsec, int64_t &delta) {
+  delta = 0;
+  bool res = false;
+  struct timespec mt = {0, 0};
+  int64_t now_sec = 0;
+  int64_t now_nsec = 0;
+  if (clock_gettime (CLOCK_REALTIME, &mt) == 0) {
+    now_sec = static_cast<int64_t>(mt.tv_sec);
+    now_nsec = static_cast<int64_t>(mt.tv_nsec);
+    if (last_sec != 0) {
+      delta = (now_sec - last_sec) * 1000000000 + now_nsec - last_nsec;
+    }
+    last_sec = now_sec;
+    last_nsec = now_nsec;
+    res = true;
+  }
+  return res;
+}
+
