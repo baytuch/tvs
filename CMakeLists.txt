@@ -16,14 +16,19 @@ if (UNIX)
 endif()
 
 find_package(Mpg123)
+find_package(Jpeg)
 
 if (MPG123_FOUND)
   include_directories(${MPG123_INCLUDE_DIR})
 endif()
 
+if (JPEG_FOUND)
+  include_directories(${JPEG_INCLUDE_DIR})
+endif()
+
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${MPG123_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${MPG123_LIBRARIES} ${JPEG_LIBRARIES})
 
 if (UNIX)
   target_link_libraries(${PROJECT_NAME} -lpthread)
