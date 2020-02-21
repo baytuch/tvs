@@ -4,6 +4,9 @@
 
 #include <stdint.h>
 
+void loadImg(const char *img_path, const uint16_t &area_width,
+             const uint16_t &area_height, uint8_t *img_area);
+
 void drawClear(const uint16_t &area_width, const uint16_t &area_height,
                uint8_t *frame_area);
 
@@ -14,6 +17,9 @@ void drawText(const uint16_t &area_width, const uint16_t &area_height,
 
 void drawGrid(const uint16_t &area_width, const uint16_t &area_height,
               uint8_t *frame_area);
+
+void drawBackground(const uint8_t *img_bg_area, uint8_t *frame_area,
+                    const uint16_t &area_width, const uint16_t &area_height);
 
 
 

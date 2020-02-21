@@ -10,8 +10,9 @@ class FrameProcessor {
 
   public:
     FrameProcessor(const uint16_t &width,
-                    const uint16_t &height,
-                    const uint8_t &rate);
+                   const uint16_t &height,
+                   const uint8_t &rate,
+                   const char *img_bg);
     ~FrameProcessor();
     void setTitle(const std::string &title);
     void setDuration(const int32_t &duration);
@@ -44,6 +45,7 @@ class FrameProcessor {
     int64_t m_last_sl_nsec;
     float m_fill;
     uint8_t *m_frame_area;
+    uint8_t *m_img_bg_area;
     uint8_t *m_loop_buffer;
     uint8_t *m_pull_buffer;
     char *m_server_buffer;
@@ -54,6 +56,7 @@ class FrameProcessor {
     static void *init_loop(void *vptr_args);
     void server();
     static void *init_server(void *vptr_args);
+    void loadBgImg(const char *img_bg);
     void renderFrame();
     void buffer_push(const uint8_t *data);
     void buffer_pull(uint8_t *data);

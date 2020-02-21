@@ -1,8 +1,21 @@
 
+#include <stdlib.h>
 #include <string.h>
 #include "font.h"
+#include "draw_utils.h"
 #include "draw.h"
 
+
+void loadImg(const char *img_path, const uint16_t &area_width,
+             const uint16_t &area_height, uint8_t *img_area) {
+  uint32_t img_width = 0;
+  uint32_t img_height = 0;
+  uint8_t *jpeg_img_area = NULL;
+  if (jpegToRaw(img_path, &jpeg_img_area, img_width, img_height)) {
+    memcpy(img_area, jpeg_img_area, area_width * area_height * 3);
+    free(jpeg_img_area);
+  }
+}
 
 void drawClear(const uint16_t &area_width, const uint16_t &area_height,
                uint8_t *frame_area) {
@@ -43,4 +56,9 @@ void drawGrid(const uint16_t &area_width, const uint16_t &area_height,
       }
     }
   }
+}
+
+void drawBackground(const uint8_t *img_bg_area, uint8_t *frame_area,
+                    const uint16_t &area_width, const uint16_t &area_height) {
+  memcpy(frame_area, img_bg_area, area_width * area_height * 3);
 }

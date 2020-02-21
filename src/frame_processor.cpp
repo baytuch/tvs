@@ -18,29 +18,33 @@ const char *FrameProcessor::server_host = "127.0.0.1";
 const uint16_t FrameProcessor::server_port = 35001;
 
 FrameProcessor::FrameProcessor(const uint16_t &width,
-                                 const uint16_t &height,
-                                 const uint8_t &rate) : m_width(width),
-                                                        m_height(height),
-                                                        m_area_size(width * height * 3),
-                                                        m_rate(rate),
-                                                        m_buffer_overflow(false),
-                                                        m_buffer_pull_lock(false),
-                                                        m_render_buffer_pull_lock(false),
-                                                        m_buffer_push_n(0),
-                                                        m_buffer_pull_n(0),
-                                                        m_last_ml_sec(0),
-                                                        m_last_ml_nsec(0),
-                                                        m_last_sl_sec(0),
-                                                        m_last_sl_nsec(0),
-                                                        m_fill(0.0),
-                                                        m_frame_area(0),
-                                                        m_loop_buffer(0),
-                                                        m_pull_buffer(0),
-                                                        m_server_buffer(0) {
+                               const uint16_t &height,
+                               const uint8_t &rate,
+                               const char *img_bg) : m_width(width),
+                                                     m_height(height),
+                                                     m_area_size(width * height * 3),
+                                                     m_rate(rate),
+                                                     m_buffer_overflow(false),
+                                                     m_buffer_pull_lock(false),
+                                                     m_render_buffer_pull_lock(false),
+                                                     m_buffer_push_n(0),
+                                                     m_buffer_pull_n(0),
+                                                     m_last_ml_sec(0),
+                                                     m_last_ml_nsec(0),
+                                                     m_last_sl_sec(0),
+                                                     m_last_sl_nsec(0),
+                                                     m_fill(0.0),
+                                                     m_frame_area(0),
+                                                     m_img_bg_area(0),
+                                                     m_loop_buffer(0),
+                                                     m_pull_buffer(0),
+                                                     m_server_buffer(0) {
   m_frame_area = mem_alloc(m_area_size);
+  m_img_bg_area = mem_alloc(m_area_size);
   m_loop_buffer = mem_alloc(m_area_size * FrameProcessor::loop_buffer_size);
   m_pull_buffer = mem_alloc(m_area_size);
   m_server_buffer = (char *) malloc((size_t) m_area_size);
+  loadBgImg(img_bg);
   pthread_create(&m_loop_tid, NULL, FrameProcessor::init_loop, this);
   pthread_create(&m_server_tid, NULL, FrameProcessor::init_server, this);
 }
@@ -85,11 +89,16 @@ void *FrameProcessor::init_server(void *vptr_args) {
   return NULL;
 }
 
+void FrameProcessor::loadBgImg(const char *img_bg) {
+  loadImg(img_bg, m_width, m_height, m_img_bg_area);
+}
+
 void FrameProcessor::renderFrame() {
   m_render_buffer_pull_lock = true;
   m_render_buffer.pull.title = m_render_buffer.push.title;
   m_render_buffer.pull.duration = m_render_buffer.push.duration;
   drawClear(m_width, m_height, m_frame_area);
+  drawBackground(m_img_bg_area, m_frame_area, m_width, m_height);
   drawText(m_width, m_height, 10, 10, m_frame_area, m_render_buffer.pull.title.c_str());
   m_render_buffer_pull_lock = false;
 }
@@ -147,11 +156,11 @@ void FrameProcessor::server() {
     acceptd = accept(socketd, (sockaddr*) NULL, NULL);
     std::cout << "FrameProcessor: server start stream" << std::endl;
     while (true) {
-      memset(m_pull_buffer, 0x00, m_area_size);
-      memset(m_server_buffer, 0x00, m_area_size);
+      //memset(m_pull_buffer, 0x00, m_area_size);
+      //memset(m_server_buffer, 0x00, m_area_size);
       buffer_pull(m_pull_buffer);
       const uint32_t frame_size = m_width * m_height;
-      memcpy(m_server_buffer, reinterpret_cast<char*>(m_pull_buffer + frame_size), frame_size);
+      memcpy(m_server_buffer, reinterpret_cast<char*>(m_pull_buffer), frame_size);
       memcpy(m_server_buffer + frame_size, reinterpret_cast<char*>(m_pull_buffer + frame_size), frame_size);
       memcpy(m_server_buffer + frame_size * 2, reinterpret_cast<char*>(m_pull_buffer + frame_size * 2), frame_size);
       bool end_stream_t = false;

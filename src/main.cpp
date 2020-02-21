@@ -3,15 +3,18 @@
 #include <iostream>
 #include <pthread.h>
 #include <functional>
+#include <string>
 #include "sleep.h"
 #include "utils.h"
+#include "draw_utils.h"
 #include "player_audio.h"
 #include "queue_audio.h"
 #include "server_audio.h"
 #include "frame_processor.h"
 
 
-const char *media_file = "/home/sasha/tmp/Bamboo.mp3";
+const char *media_file = "/home/sasha/tmp/Cyberpunk2077.mp3";
+const char *img_bg_file = "/home/sasha/tmp/background_small.jpg";
 const uint32_t sample_rate = 44100;
 const uint16_t frame_width = 640;
 const uint16_t frame_height = 360;
@@ -19,11 +22,22 @@ const uint8_t frame_rate = 24;
 
 int main(int argc, char **argv) {
 
+  /*
+  uint8_t *img_area = NULL;
+  uint32_t img_width = 0;
+  uint32_t img_height = 0;
+
+  jpegToRaw(background_file, &img_area, img_width, img_height);
+
+
+  return 0;
+*/
+
   AudioMeta meta;
   PlayerAudio pla;
   QueueAudio qa;
   ServerAudio sa;
-  FrameProcessor fp(frame_width, frame_height, frame_rate);
+  FrameProcessor fp(frame_width, frame_height, frame_rate, img_bg_file);
 
   const uint32_t compute_buffer_size = qa.getSize();
   int16_t *compute_buffer = mem_alloc_audio(compute_buffer_size * 2);
@@ -37,6 +51,7 @@ int main(int argc, char **argv) {
   }
 
   uint32_t const sample_period = 1000000000 / sample_rate + 2000;
+  int main_loop_n = 0;
   while(true) {
     int16_t pcm_r = 0;
     int16_t pcm_l = 0;
@@ -63,6 +78,37 @@ int main(int argc, char **argv) {
     //for (int16_t m = 0; m < pcm_r_peek; m++) std::cout << "#";
     //std::cout << std::endl;
     //std::cout << fill << std::endl;
+    std::string title;
+    if (pla.getMeta(meta)) {
+      for (const auto &s : meta.artist) {
+        if (s != 0x00) title += s;
+      }
+      title += " - ";
+      for (const auto &s : meta.title) {
+        if (s != 0x00) title += s;
+      }
+      //title += "";
+      fp.setTitle(title);
+    }
+    double current = 0.0;
+    double total = 0.0;
+    pla.getTime(current, total);
+    int time_num = static_cast<int32_t>(total - current);
+    std::string time_str;
+    timeToString(time_num, time_str); 
+    //std::cout << time_str << std::endl;
+    title += " [";
+    for (const auto &s : time_str) {
+      if (s != 0x00) title += s;
+    }
+    if (main_loop_n > 30) {
+      title += "]|";
+    } else {
+      title += "]";
+    }
+    main_loop_n++;
+    if (main_loop_n > 60) main_loop_n = 0;    
+    fp.setTitle(title);
   }
 
   return 0;
