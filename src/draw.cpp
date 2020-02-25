@@ -12,7 +12,11 @@ void loadImg(const char *img_path, const uint16_t &area_width,
   uint32_t img_height = 0;
   uint8_t *jpeg_img_area = NULL;
   if (jpegToRaw(img_path, &jpeg_img_area, img_width, img_height)) {
-    memcpy(img_area, jpeg_img_area, area_width * area_height * 3);
+    if (img_width == area_width && img_height == area_height) {
+      memcpy(img_area, jpeg_img_area, area_width * area_height * 3);
+    } else {
+      interBi(jpeg_img_area, img_width, img_height, img_area, area_width, area_height);
+    }
     free(jpeg_img_area);
   }
 }
