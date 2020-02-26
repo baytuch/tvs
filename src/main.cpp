@@ -11,33 +11,29 @@
 #include "queue_audio.h"
 #include "server_audio.h"
 #include "frame_processor.h"
+#include "config.h"
 
 
 const char *media_file = "/home/sasha/tmp/Cyberpunk2077.mp3";
 const char *img_bg_file = "/home/sasha/tmp/background_small.jpg";
+//const char *img_bg_file = "/home/sasha/tmp/background.jpeg";
+//const char *img_bg_file = "/home/sasha/tmp/background_extra_small.jpg";
 const uint32_t sample_rate = 44100;
-const uint16_t frame_width = 640;
-const uint16_t frame_height = 360;
 const uint8_t frame_rate = 24;
 
 int main(int argc, char **argv) {
 
-  /*
-  uint8_t *img_area = NULL;
-  uint32_t img_width = 0;
-  uint32_t img_height = 0;
-
-  jpegToRaw(background_file, &img_area, img_width, img_height);
-
-
-  return 0;
-*/
+  Config config;
+  loadConfig(config);
 
   AudioMeta meta;
   PlayerAudio pla;
   QueueAudio qa;
   ServerAudio sa;
-  FrameProcessor fp(frame_width, frame_height, frame_rate, img_bg_file);
+  FrameProcessor fp(config.resolution.width,
+                    config.resolution.height,
+                    frame_rate,
+                    img_bg_file);
 
   const uint32_t compute_buffer_size = qa.getSize();
   int16_t *compute_buffer = mem_alloc_audio(compute_buffer_size * 2);
