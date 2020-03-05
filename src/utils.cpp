@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "sleep.h"
 #include "utils.h"
 
@@ -107,6 +109,36 @@ bool deltaTime(int64_t &last_sec, int64_t &last_nsec, int64_t &delta) {
     last_nsec = now_nsec;
     res = true;
   }
+  return res;
+}
+
+bool getMediaList(const char *path, const char *ext, std::vector<std::string> &media_list) {
+  const char sub = '.';
+  bool res = false;
+  media_list.clear();
+  DIR *dir;
+  struct dirent *de;
+  dir = opendir(path);
+  if (dir != NULL) {
+    while(true) {
+      de = readdir(dir);
+      if (de != NULL) {
+        if (de->d_type == DT_REG) {
+          std::string file_name(de->d_name);
+          const size_t pos = file_name.find_last_of(sub);
+          if (pos != std::string::npos && pos == file_name.size() - 4) {
+            if (file_name.substr(pos + 1, 3) == ext) {
+              media_list.push_back(std::string(path) + '/' + file_name);
+            }
+          }
+        }
+      } else {
+        break;
+      }
+    }
+    closedir(dir);
+  }
+  if (media_list.size() > 0) res = true;
   return res;
 }
 
